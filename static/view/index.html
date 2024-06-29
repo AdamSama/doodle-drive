@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .upload-container {
+            background-color: white;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            width: 400px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .upload-text {
+            color: #999;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+        .browse {
+            background-color: #007bff;
+            color: white;
+        }
+        .remove {
+            background-color: #dc3545;
+            color: white;
+        }
+        .upload {
+            background-color: #28a745;
+            color: white;
+        }
+        .file-input {
+            display: none;
+        }
+        #file-actions {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        #file-name {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Upload</h1>
+    <div class="upload-container" id="drop-area">
+        <p class="upload-text">Drag & drop files here ...</p>
+        <label for="file-input" class="button browse">Browse...</label>
+    </div>
+    <div id="file-actions">
+        <p id="file-name"></p>
+        <button class="button remove" onclick="removeFile()">Remove</button>
+        <button class="button upload" onclick="uploadFile()">Upload</button>
+        <label for="file-input" class="button browse">Browse...</label>
+    </div>
+    <input type="file" id="file-input" class="file-input" onchange="fileSelected()">
+
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileActions = document.getElementById('file-actions');
+        const fileName = document.getElementById('file-name');
+
+        function fileSelected() {
+            if (fileInput.files.length > 0) {
+                dropArea.style.display = 'none';
+                fileActions.style.display = 'block';
+                fileName.textContent = fileInput.files[0].name;
+            }
+        }
+
+        function removeFile() {
+            fileInput.value = '';
+            dropArea.style.display = 'flex';
+            fileActions.style.display = 'none';
+            fileName.textContent = '';
+        }
+
+        function uploadFile() {
+            if (fileInput.files.length === 0) {
+                alert('Please select a file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/file/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/file/upload/suc';
+                } else {
+                    throw new Error('Upload failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Upload failed. Please try again.');
+            });
+        }
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            fileSelected();
+        }
+    </script>
+</body>
+</html>
